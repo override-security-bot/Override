@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Override Security Hub</title>
+<style>
+:root {
+  --bg: #070a0f;
+  --panel: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.1);
+  --accent: #00f6ff;
+  --accent2: #ff00ff;
+  --text: #eaeaea;
+  --muted: #9aa4b2;
+  --hover: rgba(0,246,255,0.2);
+}
+
+* { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: radial-gradient(circle at top, #0b1c24, var(--bg));
+  color: var(--text);
+}
+
+nav {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(14px);
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 15px;
+  z-index: 20;
+}
+
+nav button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+nav button:hover {
+  color: var(--accent);
+}
+
+nav button.active {
+  color: var(--accent);
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 60px 20px;
+}
+
+h1 { font-size: 42px; margin-bottom:10px; }
+.sub { color: var(--muted); max-width:600px; margin-bottom:20px; }
+
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.filters button {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.filters button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.search input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  transition: all 0.25s ease;
+  cursor:pointer;
+  position: relative;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.02);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--hover);
+}
+
+.card h3 { margin-bottom:6px; }
+.card p { margin-bottom:8px; color: var(--muted); }
+.badge {
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  background: rgba(0,246,255,0.15);
+  color: var(--accent);
+}
+
+.copy-btn {
+  position:absolute;
+  top:12px; right:12px;
+  background: var(--accent);
+  border:none;
+  color:#000;
+  padding:4px 8px;
+  font-size:11px;
+  border-radius:6px;
+  cursor:pointer;
+  opacity:0;
+  transition:0.2s;
+}
+
+.card:hover .copy-btn { opacity:1; }
+
+.modal-bg {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:100;
+}
+
+.modal {
+  background: var(--panel);
+  padding:30px;
+  border-radius:16px;
+  max-width:500px;
+  width:90%;
+  text-align:left;
+  position: relative;
+  animation: fadeUp 0.3s ease;
+}
+
+.modal-close {
+  position:absolute;
+  top:10px; right:10px;
+  cursor:pointer;
+  font-weight:bold;
+  font-size:18px;
+  color: var(--accent);
+}
+
+section { display:none; }
+section.active { display:block; }
+
+.faq-item {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius:14px;
+  margin-bottom:12px;
+  padding:16px;
+  cursor:pointer;
+  transition:0.25s;
+}
+
+.faq-item p { display:none; color:var(--muted); margin-top:8px; }
+.faq-item.open p { display:block; }
+
+.leaderboard-card {
+  background: var(--panel);
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:12px;
+  border:1px solid var(--border);
+}
+
+input,textarea {
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  color: var(--text);
+  width:100%;
+  margin-bottom:12px;
+}
+
+button.submit-btn {
+  background: var(--accent);
+  border:none;
+  padding:10px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  color:#000;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+button.submit-btn:hover { background: var(--accent2); }
+
+@keyframes fadeUp {
+  from {opacity:0; transform: translateY(15px);}
+  to {opacity:1; transform: translateY(0);}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="active" onclick="openTab(event,'home')">Home</button>
+  <button onclick="openTab(event,'commands')">Commands</button>
+  <button onclick="openTab(event,'status')">Status</button>
+  <button onclick="openTab(event,'faq')">FAQ</button>
+  <button onclick="openTab(event,'leaderboard')">Leaderboard</button>
+  <button onclick="openTab(event,'invite')">Invite</button>
+  <button onclick="openTab(event,'contact')">Contact</button>
+</nav>
+
+<!-- HOME -->
+<section id="home" class="active">
+  <div class="container">
+    <h1>Welcome to Override Security Hub</h1>
+    <p class="sub">Your ultimate Discord bot management center with interactive commands, stats, and more.</p>
+  </div>
+</section>
+
+<!-- COMMANDS -->
+<section id="commands">
+<div class="container">
+<h1>Commands</h1>
+<p class="sub">Browse all Override Security commands.</p>
+
+<div class="search">
+  <input type="text" placeholder="Search commands..." onkeyup="searchCommands(this.value)">
+</div>
+
+<div class="filters">
+  <button class="active" onclick="filterCommands('all',this)">All</button>
+  <button onclick="filterCommands('Moderation',this)">Moderation</button>
+  <button onclick="filterCommands('Economy',this)">Economy</button>
+  <button onclick="filterCommands('Music',this)">Music</button>
+  <button onclick="filterCommands('Utility',this)">Utility</button>
+  <button onclick="filterCommands('AFK',this)">AFK</button>
+  <button onclick="filterCommands('Notes',this)">Notes</button>
+</div>
+
+<div class="grid" id="commandGrid">
+
+<!-- FULL COMMAND LIST -->
+<!-- Setup -->
+<div class="card" data-category="Utility" onclick="openModal(',setup','Setup jail & modlog systems')">
+<h3>,setup</h3><p>Setup jail/modlog</p>
+<span class="badge">Utility</span>
+<button class="copy-btn" onclick="copyCommand(event,',setup')">Copy</button>
+</div>
+
+<div class="card" data-category="Utility" onclick="openModal(',prefix <new>','Change bot prefix')">
+<h3>,prefix &lt;new&gt;</h3><p>Change prefix</p>
+<span class="badge">Utility</span>
+<button class="copy-btn" onclick="copyCommand(event,',prefix <new>')">Copy</button>
+</div>
+
+<!-- Moderation -->
+<div class="card" data-category="Moderation" onclick="openModal(',ban @user','Ban user')"><h3>,ban @user</h3><p>Ban user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',ban @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',softban @user','Softban user')"><h3>,softban @user</h3><p>Softban user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',softban @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',kick @user','Kick user')"><h3>,kick @user</h3><p>Kick user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',kick @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',mute @user','Mute user')"><h3>,mute @user</h3><p>Mute user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',mute @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',unmute @user','Unmute user')"><h3>,unmute @user</h3><p>Unmute user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',unmute @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',lock','Lock channels')"><h3>,lock</h3><p>Lock channels</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',lock')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',unlock','Unlock channels')"><h3>,unlock</h3><p>Unlock channels</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',unlock')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',hardban @user','Hardban user')"><h3>,hardban @user</h3><p>Hardban user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',hardban @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',jail @user','Jail a user')"><h3>,jail @user</h3><p>Jail user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',jail @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',unjail @user','Release from jail')"><h3>,unjail @user</h3><p>Unjail user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',unjail @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',jaillist','List jailed users')"><h3>,jaillist</h3><p>List jailed users</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',jaillist')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',timeout @user <minutes>','Timeout a user')"><h3>,timeout @user &lt;minutes&gt;</h3><p>Timeout user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',timeout @user <minutes>')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',untimeout @user','Remove timeout')"><h3>,untimeout @user</h3><p>Remove timeout</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',untimeout @user')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',timeoutlist','Timeout list')"><h3>,timeoutlist</h3><p>Timeout list</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',timeoutlist')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',modstats [user]','View mod stats')"><h3>,modstats [user]</h3><p>Moderator stats</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',modstats [user]')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',c [amount] [@user]','Purge messages')"><h3>,c [amount] [@user]</h3><p>Purge messages optionally from user</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',c [amount] [@user]')">Copy</button></div>
+
+<div class="card" data-category="Moderation" onclick="openModal(',hide / ,unhide','Hide/unhide channels')"><h3>,hide / ,unhide</h3><p>Hide/unhide channels</p><span class="badge">Moderation</span><button class="copy-btn" onclick="copyCommand(event,',hide / ,unhide')">Copy</button></div>
+
+<!-- AFK -->
+<div class="card" data-category="AFK" onclick="openModal(',afk [reason]','Set AFK status')"><h3>,afk [reason]</h3><p>Set AFK status</p><span class="badge">AFK</span><button class="copy-btn" onclick="copyCommand(event,',afk [reason]')">Copy</button></div>
+
+<!-- Notes -->
+<div class="card" data-category="Notes" onclick="openModal(',notes add @user <note>','Add note')"><h3>,notes add @user &lt;note&gt;</h3><p>Add note</p><span class="badge">Notes</span><button class="copy-btn" onclick="copyCommand(event,',notes add @user <note>')">Copy</button></div>
+
+<div class="card" data-category="Notes" onclick="openModal(',notes remove @user <index>','Remove note')"><h3>,notes remove @user &lt;index&gt;</h3><p>Remove note</p><span class="badge">Notes</span><button class="copy-btn" onclick="copyCommand(event,',notes remove @user <index>')">Copy</button></div>
+
+<div class="card" data-category="Notes" onclick="openModal(',notes clear @user','Clear notes')"><h3>,notes clear @user</h3><p>Clear notes</p><span class="badge">Notes</span><button class="copy-btn" onclick="copyCommand(event,',notes clear @user')">Copy</button></div>
+
+<div class="card" data-category="Notes" onclick="openModal(',notes list @user','List notes')"><h3>,notes list @user</h3><p>List notes</p><span class="badge">Notes</span><button class="copy-btn" onclick="copyCommand(event,',notes list @user')">Copy</button></div>
+
+<!-- Economy -->
+<div class="card" data-category="Economy" onclick="openModal(',openaccount','Open account')"><h3>,openaccount</h3><p>Open economy account</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',openaccount')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',balance','Check balance')"><h3>,balance</h3><p>Check balance</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',balance')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',deposit <amount>','Deposit money')"><h3>,deposit &lt;amount&gt;</h3><p>Deposit money</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',deposit <amount>')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',withdraw <amount>','Withdraw money')"><h3>,withdraw &lt;amount&gt;</h3><p>Withdraw money</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',withdraw <amount>')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',daily','Daily rewards')"><h3>,daily</h3><p>Claim daily reward</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',daily')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',work','Work for money')"><h3>,work</h3><p>Work to earn money</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',work')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',pay @user <amount>','Pay user')"><h3>,pay @user &lt;amount&gt;</h3><p>Pay a user</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',pay @user <amount>')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',rob @user','Rob a user')"><h3>,rob @user</h3><p>Rob a user</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',rob @user')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',slots <amount>','Slots game')"><h3>,slots &lt;amount&gt;</h3><p>Play slots</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',slots <amount>')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',invest <amount>','Invest money')"><h3>,invest &lt;amount&gt;</h3><p>Invest money</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',invest <amount>')">Copy</button></div>
+
+<div class="card" data-category="Economy" onclick="openModal(',leaderboard','Economy leaderboard')"><h3>,leaderboard</h3><p>Check leaderboard</p><span class="badge">Economy</span><button class="copy-btn" onclick="copyCommand(event,',leaderboard')">Copy</button></div>
+
+<!-- Music -->
+<div class="card" data-category="Music" onclick="openModal(',play <song>','Play music')"><h3>,play &lt;song&gt;</h3><p>Play music</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',play <song>')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',pause','Pause music')"><h3>,pause</h3><p>Pause playback</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',pause')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',skip','Skip track')"><h3>,skip</h3><p>Skip song</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',skip')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',resume','Resume music')"><h3>,resume</h3><p>Resume playback</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',resume')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',stop','Stop music')"><h3>,stop</h3><p>Stop music</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',stop')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',loop','Loop song')"><h3>,loop</h3><p>Loop music</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',loop')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',volume <0-100>','Set volume')"><h3>,volume &lt;0-100&gt;</h3><p>Set volume</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',volume <0-100>')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',ap','Auto play')"><h3>,ap</h3><p>Autoplay</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',ap')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',queue','View queue')"><h3>,queue</h3><p>Queue</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',queue')">Copy</button></div>
+
+<div class="card" data-category="Music" onclick="openModal(',qc','Queue control')"><h3>,qc</h3><p>Queue control</p><span class="badge">Music</span><button class="copy-btn" onclick="copyCommand(event,',qc')">Copy</button></div>
+
+<!-- Utility -->
+<div class="card" data-category="Utility" onclick="openModal(',userinfo [user]','View user info')"><h3>,userinfo [user]</h3><p>User info</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',userinfo [user]')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',serverinfo','Server info')"><h3>,serverinfo</h3><p>Server info</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',serverinfo')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',avatar [user]','View avatar')"><h3>,avatar [user]</h3><p>Avatar</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',avatar [user]')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',banner [user]','View banner')"><h3>,banner [user]</h3><p>Banner</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',banner [user]')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',snipe','Snipe last deleted message')"><h3>,snipe</h3><p>Snipe last message</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',snipe')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',clearsnipe','Clear snipe cache')"><h3>,clearsnipe</h3><p>Clear snipe</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',clearsnipe')">Copy</button></div>
+
+<div class="card" data-category="Utility" onclick="openModal(',filter','Enable word filter')"><h3>,filter</h3><p>Blocks bad words automatically</p><span class="badge">Utility</span><button class="copy-btn" onclick="copyCommand(event,',filter')">Copy</button></div>
+
+</div>
+</div>
+</section>
+
+<!-- STATUS -->
+<section id="status">
+<div class="container">
+<h1>Status</h1>
+<p class="sub">Bot systems operational</p>
+<div class="card">
+<p>Status: <span style="color:#00ff9c">Online</span></p>
+<p>Latency: 28ms</p>
+<p>Servers: 245</p>
+<p>Users: 5678</p>
+</div>
+</div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+<div class="container">
+<h1>FAQ</h1>
+<div class="faq-item" onclick="toggleFAQ(this)"><strong>Is Override Security free?</strong><p>Yes, free tier with premium options.</p></div>
+<div class="faq-item" onclick="toggleFAQ(this)"><strong>How do I invite the bot?</strong><p>Use official invite link.</p></div>
+<div class="faq-item" onclick="toggleFAQ(this)"><strong>Does it support anti-raid?</strong><p>Yes, real-time detection included.</p></div>
+</div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard">
+<div class="container">
+<h1>Leaderboard</h1>
+<p class="sub">Top economy users (example)</p>
+<div class="leaderboard-card">1. UserA - $2000</div>
+<div class="leaderboard-card">2. UserB - $1500</div>
+<div class="leaderboard-card">3. UserC - $1200</div>
+</div>
+</section>
+
+<!-- INVITE -->
+<section id="invite">
+<div class="container">
+<h1>Invite Override Security</h1>
+<p class="sub">Click below to invite to your server:</p>
+<button class="submit-btn">Invite Bot</button>
+</div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+<div class="container">
+<h1>Contact</h1>
+<p class="sub">Send us a message:</p>
+<input type="text" placeholder="Your Name">
+<input type="email" placeholder="Your Email">
+<textarea placeholder="Message" rows="5"></textarea>
+<button class="submit-btn">Send</button>
+</div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+<div class="modal">
+  <span class="modal-close" onclick="closeModal()">×</span>
+  <h3 id="modalTitle"></h3>
+  <p id="modalDesc"></p>
+</div>
+</div>
+
+<script>
+function openTab(e,id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  e.target.classList.add("active");
+}
+
+function filterCommands(cat,btn){
+  document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".card").forEach(card=>{
+    card.style.display = (cat==="all" || card.dataset.category===cat) ? "block" : "none";
+  });
+}
+
+function searchCommands(val){
+  val=val.toLowerCase();
+  document.querySelectorAll(".card").forEach(card=>{
+    card.style.display = card.innerText.toLowerCase().includes(val)?"block":"none";
+  });
+}
+
+function toggleFAQ(el){ el.classList.toggle("open"); }
+
+function openModal(title,desc){
+  document.getElementById("modalBg").style.display="flex";
+  document.getElementById("modalTitle").innerText=title;
+  document.getElementById("modalDesc").innerText=desc;
+}
+
+function closeModal(){
+  document.getElementById("modalBg").style.display="none";
+}
+
+function copyCommand(e,command){
+  e.stopPropagation();
+  navigator.clipboard.writeText(command);
+  alert("Copied: "+command);
+}
+</script>
+</body>
+</html>
+
